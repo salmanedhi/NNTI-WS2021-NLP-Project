@@ -74,3 +74,14 @@ def padding(array, seq_len):
         else:
             padded_array.append(item)
     return np.array(padded_array)
+
+def sentence_to_numeric_arr(sentences, V):
+    x_data = []
+    max_len_curr = -1
+    for sentence in sentences:
+        temp, max_len = sentence_to_index(sentence, V)
+        if max_len > max_len_curr:
+            max_len_curr = max_len
+        x_data.append(temp)
+    return x_data, max_len_curr
+
