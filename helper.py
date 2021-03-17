@@ -1,4 +1,22 @@
 import numpy as np
+import pandas as pd
+import nltk
+from nltk.corpus import stopwords
+import torch as torch
+from torch import nn
+from nltk.tokenize import word_tokenize
+import math as mt
+import time
+import random
+from joblib import Parallel, delayed
+from torch.autograd import Variable
+import matplotlib.pyplot as plt
+import torch.utils.data as data_utils
+from torch.utils.data import TensorDataset, DataLoader
+from sklearn.utils import shuffle
+from models.LSTM import SentimentLSTM
+from models.Word2Vec import Word2Vec
+
 
 def apply_stopword_removal(data):
     hindi_stopword_file = open('data/stopwords-hi.txt', encoding="utf8")
@@ -84,4 +102,71 @@ def sentence_to_numeric_arr(sentences, V):
             max_len_curr = max_len
         x_data.append(temp)
     return x_data, max_len_curr
+
+def get_bengali_data(file_path):
+    bengali_data = pd.read_csv(file_path)
+
+    bengali_data_hate = bengali_data.loc[bengali_data['hate'] == 1]
+    bengali_data_not_hate = bengali_data.loc[bengali_data['hate'] == 0]
+
+    bengali_data_hate = bengali_data_hate.iloc[0:2332] 
+    bengali_data_not_hate = bengali_data_not_hate.iloc[0:2333]
+
+    bengali_data = pd.concat([bengali_data_hate, bengali_data_not_hate])
+    bengali_data = shuffle(bengali_data)
+    bengali_data.columns = ["text", "hate", "category"]
+
+    labels = bengali_data['hate']
+    labels = np.array(labels)
+    
+    return bengali_data, labels
+
+def load_word2vec_embeddings(model_path, device, features, embedding_size):
+    model = Word2Vec(features, embedding_size)
+    if(device == "cpu"):
+        model.cpu()
+        model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+    else:
+        model.load_state_dict(torch.load(model_path))
+
+    print(model.eval())
+    weights1 = torch.transpose(model.fc1.weight, 0, 1)
+    weights2 = torch.transpose(model.fc2.weight, 0, 1)
+    temp_row = np.zeros(embedding_size).reshape(1,embedding_size)
+    weights1_np = weights1.cpu().detach().numpy()
+    weights1_np = np.concatenate((temp_row, weights1_np), axis=0)
+    weights1 = torch.Tensor(weights1_np)
+    
+    return weights1, weights2
+
+
+def split_data_train_valid_test(data_x, labels_y, batch_size):
+    train_ratio = 0.8
+    valid_ratio = (1 - train_ratio)/2
+    total = data_x.shape[0]
+    train_cutoff = int(total * train_ratio)
+    valid_cutoff = int(total * (1 - valid_ratio))
+
+    train_x, train_y = data_x[:train_cutoff], labels_y[:train_cutoff]
+    valid_x, valid_y = data_x[train_cutoff : valid_cutoff], labels_y[train_cutoff : valid_cutoff]
+    test_x, test_y = data_x[valid_cutoff:], labels_y[valid_cutoff:]
+    
+    train_data = TensorDataset(torch.tensor(train_x), torch.tensor(train_y))
+    valid_data = TensorDataset(torch.tensor(valid_x), torch.tensor(valid_y))
+    test_data = TensorDataset(torch.tensor(test_x), torch.tensor(test_y))
+
+    train_loader = DataLoader(train_data, batch_size = batch_size, shuffle = True, drop_last=True)
+    valid_loader = DataLoader(valid_data, batch_size = batch_size, shuffle = True, drop_last=True)
+    test_loader = DataLoader(test_data, batch_size = batch_size, shuffle = True, drop_last=True)
+    
+    return train_loader, valid_loader, test_loader
+
+def initialize_SentimentLSTM_model(n_vocab, n_embed, n_hidden, n_output, n_layers, device, embedding_weights):
+    net = SentimentLSTM(n_vocab, n_embed, n_hidden, n_output, n_layers, embedding_weights)
+    net.to(device)
+    criterion = nn.BCELoss()
+    optimizer = torch.optim.Adam(net.parameters(), lr = 0.001, amsgrad=True)
+    
+    return net, criterion, optimizer
+       
 
