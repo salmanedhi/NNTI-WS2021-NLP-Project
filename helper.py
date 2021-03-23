@@ -15,6 +15,9 @@ import torch.utils.data as data_utils
 from torch.utils.data import TensorDataset, DataLoader
 from sklearn.utils import shuffle
 from models.LSTM import SentimentLSTM
+from models.LSTM import SentimentLSTM_task3
+from models.LSTM import SentimentLSTM_bengali
+from models.LSTM import SentimentLSTM_task3_bengali
 from models.Word2Vec import Word2Vec
 
 
@@ -38,6 +41,32 @@ def apply_stopword_removal(data):
         new_array = []
         for j in text_array:
             if '@' not in j and len(j) < 20:
+                for char in sw_list:
+                    j = j.replace(char, '')
+                new_array.append(j.lower())
+        sentences.append(' '.join(new_array))
+    return sentences
+
+def apply_stopword_removal_task3(data):
+    hindi_stopword_file = open('data/stopwords-hi.txt', encoding="utf8")
+
+    sw_list = ['#', '?', '!', ';', ',', ':', "\'", '-', '=', '(', ')', '[', ']', '{', '}', '"', '*', '@', '  ', '\\',
+               '/', '..', '...', '....', '%'
+        , '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '\t']
+    sw_list_string = ''
+    for i in sw_list:
+        sw_list_string += i
+    hindi_stopwords = []
+    for x in hindi_stopword_file:
+        hindi_stopwords.append(x.rstrip())
+
+    hindi_stopwords.extend(sw_list)
+    sentences = []
+    for text in data['text']:
+        text_array = text.split(' ')
+        new_array = []
+        for j in text_array:
+            if '@' not in j and len(j) < 20 and 'www.' not in j and '.com' not in j and 'http' not in j:
                 for char in sw_list:
                     j = j.replace(char, '')
                 new_array.append(j.lower())
@@ -150,7 +179,8 @@ def split_data_train_valid_test(data_x, labels_y, batch_size):
     train_x, train_y = data_x[:train_cutoff], labels_y[:train_cutoff]
     valid_x, valid_y = data_x[train_cutoff : valid_cutoff], labels_y[train_cutoff : valid_cutoff]
     test_x, test_y = data_x[valid_cutoff:], labels_y[valid_cutoff:]
-    
+    print(type(train_x), type(train_y))
+    temp = torch.tensor(train_x)
     train_data = TensorDataset(torch.tensor(train_x), torch.tensor(train_y))
     valid_data = TensorDataset(torch.tensor(valid_x), torch.tensor(valid_y))
     test_data = TensorDataset(torch.tensor(test_x), torch.tensor(test_y))
@@ -165,8 +195,30 @@ def initialize_SentimentLSTM_model(n_vocab, n_embed, n_hidden, n_output, n_layer
     net = SentimentLSTM(n_vocab, n_embed, n_hidden, n_output, n_layers, embedding_weights)
     net.to(device)
     criterion = nn.BCELoss()
-    optimizer = torch.optim.Adam(net.parameters(), lr = 0.001, amsgrad=True)
+#     optimizer = torch.optim.Adam(net.parameters(), lr = 0.05, amsgrad=True)
     
-    return net, criterion, optimizer
+    return net, criterion
+
+def initialize_SentimentLSTM_model_bengali(n_vocab, n_embed, n_hidden, n_output, n_layers, device, embedding_weights):
+    net = SentimentLSTM_bengali(n_vocab, n_embed, n_hidden, n_output, n_layers, embedding_weights)
+    net.to(device)
+    criterion = nn.BCELoss()
+#     optimizer = torch.optim.Adam(net.parameters(), lr = 0.05, amsgrad=True)
+    
+    return net, criterion
+
+def initialize_SentimentLSTM_model_task3(n_vocab, batch_size, n_embed, n_hidden, n_output, n_layers, device):
+    net = SentimentLSTM_task3(n_vocab, batch_size, n_embed, n_hidden, n_output, n_layers)
+    net.to(device)
+    criterion = nn.BCELoss()
+#     optimizer = torch.optim.Adam(net.parameters(), lr = 0.05, amsgrad=True)
+    
+    return net, criterion
+
+def initialize_SentimentLSTM_model_task3_bengali(n_vocab, batch_size, n_embed, n_hidden, n_output, n_layers, device, embedding_weights):
+    net = SentimentLSTM_task3_bengali(n_vocab, batch_size, n_embed, n_hidden, n_output, n_layers, embedding_weights)
+    net.to(device)
+    criterion = nn.BCELoss()
+    return net, criterion
        
 
