@@ -174,22 +174,22 @@ def split_data_train_valid_test(data_x, labels_y, batch_size):
     valid_ratio = (1 - train_ratio)/2
     total = data_x.shape[0]
     train_cutoff = int(total * train_ratio)
-    valid_cutoff = int(total * (1 - valid_ratio))
+#     valid_cutoff = int(total * (1 - valid_ratio))
 
     train_x, train_y = data_x[:train_cutoff], labels_y[:train_cutoff]
-    valid_x, valid_y = data_x[train_cutoff : valid_cutoff], labels_y[train_cutoff : valid_cutoff]
-    test_x, test_y = data_x[valid_cutoff:], labels_y[valid_cutoff:]
+#     valid_x, valid_y = data_x[train_cutoff : valid_cutoff], labels_y[train_cutoff : valid_cutoff]
+    test_x, test_y = data_x[train_cutoff:], labels_y[train_cutoff:]
     print(type(train_x), type(train_y))
     temp = torch.tensor(train_x)
     train_data = TensorDataset(torch.tensor(train_x), torch.tensor(train_y))
-    valid_data = TensorDataset(torch.tensor(valid_x), torch.tensor(valid_y))
+#     valid_data = TensorDataset(torch.tensor(valid_x), torch.tensor(valid_y))
     test_data = TensorDataset(torch.tensor(test_x), torch.tensor(test_y))
 
     train_loader = DataLoader(train_data, batch_size = batch_size, shuffle = True, drop_last=True)
-    valid_loader = DataLoader(valid_data, batch_size = batch_size, shuffle = True, drop_last=True)
+#     valid_loader = DataLoader(valid_data, batch_size = batch_size, shuffle = True, drop_last=True)
     test_loader = DataLoader(test_data, batch_size = batch_size, shuffle = True, drop_last=True)
     
-    return train_loader, valid_loader, test_loader
+    return train_loader, test_loader
 
 def initialize_SentimentLSTM_model(n_vocab, n_embed, n_hidden, n_output, n_layers, device, embedding_weights):
     net = SentimentLSTM(n_vocab, n_embed, n_hidden, n_output, n_layers, embedding_weights)
