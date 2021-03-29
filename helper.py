@@ -21,6 +21,11 @@ from models.LSTM import SentimentLSTM_task3_bengali
 from models.Word2Vec import Word2Vec
 
 
+#this function performs the following:
+    #removes stopwords from the data
+    #removes punctuation symbols
+    #removes usernames (starting from '@')
+    #applies lowercasing to all words
 def apply_stopword_removal(data):
     hindi_stopword_file = open('data/stopwords-hi.txt', encoding="utf8")
 
@@ -47,6 +52,12 @@ def apply_stopword_removal(data):
         sentences.append(' '.join(new_array))
     return sentences
 
+#this function performs the following:
+    #removes stopwords from the data
+    #removes punctuation symbols
+    #removes usernames (starting from '@')
+    #applies lowercasing to all words
+    #removes URLS 
 def apply_stopword_removal_task3(data):
     hindi_stopword_file = open('data/stopwords-hi.txt', encoding="utf8")
 
@@ -74,6 +85,7 @@ def apply_stopword_removal_task3(data):
     return sentences
 
 
+#Splits sentences into vocabulary of words
 def build_vocabulary(sentences):
     temp_unique = []  # For unique words
     temp_nounique = []
@@ -111,8 +123,9 @@ def sentence_to_index(sentence, V):
     for i in words:
         l.append(V.index(i) + 1)
     return l, len(l)
-#     return l
 
+
+#applies padding on the left side of an array to match the length of sequence (seq_len)
 def padding(array, seq_len):
     padded_array = []
     for item in array:
@@ -122,6 +135,7 @@ def padding(array, seq_len):
             padded_array.append(item)
     return np.array(padded_array)
 
+#create number array of sentences (replace each word its each numeric value)
 def sentence_to_numeric_arr(sentences, V):
     x_data = []
     max_len_curr = -1
@@ -132,6 +146,7 @@ def sentence_to_numeric_arr(sentences, V):
         x_data.append(temp)
     return x_data, max_len_curr
 
+#read bengali data, extract data to make it roughly equal to size of hindi data
 def get_bengali_data(file_path):
     bengali_data = pd.read_csv(file_path)
 
@@ -169,6 +184,7 @@ def load_word2vec_embeddings(model_path, device, features, embedding_size):
     return weights1, weights2
 
 
+#split data into train and test set
 def split_data_train_valid_test(data_x, labels_y, batch_size):
     train_ratio = 0.8
     valid_ratio = (1 - train_ratio)/2
