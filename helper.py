@@ -21,15 +21,13 @@ from models.LSTM import SentimentLSTM_task3_bengali
 from models.Word2Vec import Word2Vec
 
 
+# Inputs corpus and removes stopwords given by file and more that are provided
 def apply_stopword_removal(data):
     hindi_stopword_file = open('data/stopwords-hi.txt', encoding="utf8")
 
     sw_list = ['#', '?', '!', ';', ',', ':', "\'", '-', '=', '(', ')', '[', ']', '{', '}', '"', '*', '@', '  ', '\\',
                '/', '..', '...', '....', '%'
         , '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '\t']
-    sw_list_string = ''
-    for i in sw_list:
-        sw_list_string += i
     hindi_stopwords = []
     for x in hindi_stopword_file:
         hindi_stopwords.append(x.rstrip())
@@ -40,22 +38,20 @@ def apply_stopword_removal(data):
         text_array = text.split(' ')
         new_array = []
         for j in text_array:
-            if '@' not in j and len(j) < 20:
+            if '@' not in j and len(j) < 20 and j not in hindi_stopwords:
                 for char in sw_list:
                     j = j.replace(char, '')
                 new_array.append(j.lower())
         sentences.append(' '.join(new_array))
     return sentences
 
+# Same as before, but also handles urls now as stop words.
 def apply_stopword_removal_task3(data):
     hindi_stopword_file = open('data/stopwords-hi.txt', encoding="utf8")
 
     sw_list = ['#', '?', '!', ';', ',', ':', "\'", '-', '=', '(', ')', '[', ']', '{', '}', '"', '*', '@', '  ', '\\',
                '/', '..', '...', '....', '%'
         , '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '\t']
-    sw_list_string = ''
-    for i in sw_list:
-        sw_list_string += i
     hindi_stopwords = []
     for x in hindi_stopword_file:
         hindi_stopwords.append(x.rstrip())
@@ -66,14 +62,16 @@ def apply_stopword_removal_task3(data):
         text_array = text.split(' ')
         new_array = []
         for j in text_array:
-            if '@' not in j and len(j) < 20 and 'www.' not in j and '.com' not in j and 'http' not in j:
+            if '@' not in j and len(j) < 20 and 'www.' not in j and '.com' not in j and 'http' not in j and j not in hindi_stopwords:
                 for char in sw_list:
                     j = j.replace(char, '')
                 new_array.append(j.lower())
         sentences.append(' '.join(new_array))
     return sentences
 
-
+# To build complete vocabulary given all sentences
+# Input: all sentences
+# Output: Unique words (Vocabulary), All words
 def build_vocabulary(sentences):
     temp_unique = []  # For unique words
     temp_nounique = []
@@ -85,6 +83,8 @@ def build_vocabulary(sentences):
             temp_nounique.append(k)
     return temp_unique, temp_nounique
 
+# Input: Word, Vocabulary and length of Vocabulary
+# Output: Word as Onehot encoded vector
 def word_to_one_hot(word, features, V):
     if word in V:
         index = V.index(word)
@@ -93,26 +93,24 @@ def word_to_one_hot(word, features, V):
         return encoding.astype(np.uint8)
     return False
 
+# Returns index of word in the vocabulary list.
 def not_word_to_one_hot(word, features, V):
     if word in V:
         index = V.index(word)
         return index
     return False
 
-def index_to_onehot(X_batch):
-    X_batch_new = []
-    y_batch_new = []
-    encodingX = np.eye(4)[X_batch]
-    return type(encodingX)
-
+# Takes a sentence and returns an array/list of indices where each index correspond to the index of that word in vocabulary
 def sentence_to_index(sentence, V):
     words = sentence.split(' ')
     l = []
     for i in words:
         l.append(V.index(i) + 1)
     return l, len(l)
-#     return l
 
+# Padding of array to the left to keep input size consistent
+# Input: Array and len of maximum sentence
+# Output: Padded array
 def padding(array, seq_len):
     padded_array = []
     for item in array:
@@ -122,6 +120,8 @@ def padding(array, seq_len):
             padded_array.append(item)
     return np.array(padded_array)
 
+# Takes all sentences and returns their indexed arrays
+# Sentence is converted to array/list of indices where each index correspond to the index of that word in vocabulary
 def sentence_to_numeric_arr(sentences, V):
     x_data = []
     max_len_curr = -1
@@ -132,6 +132,7 @@ def sentence_to_numeric_arr(sentences, V):
         x_data.append(temp)
     return x_data, max_len_curr
 
+# Load Bengali data of same size as of Hindi data
 def get_bengali_data(file_path):
     bengali_data = pd.read_csv(file_path)
 
@@ -150,6 +151,8 @@ def get_bengali_data(file_path):
     
     return bengali_data, labels
 
+# Load embeddings trained by Word2Vec.
+# Takes a path/model_name, shape and device and returns weights
 def load_word2vec_embeddings(model_path, device, features, embedding_size):
     model = Word2Vec(features, embedding_size)
     if(device == "cpu"):
@@ -168,7 +171,8 @@ def load_word2vec_embeddings(model_path, device, features, embedding_size):
     
     return weights1, weights2
 
-
+# Splitting of dataset to train, test, and validation set
+# Note: Validation set was only used during model selection, it has been commented now to make training set larger
 def split_data_train_valid_test(data_x, labels_y, batch_size):
     train_ratio = 0.8
     valid_ratio = (1 - train_ratio)/2
@@ -191,6 +195,7 @@ def split_data_train_valid_test(data_x, labels_y, batch_size):
     
     return train_loader, test_loader
 
+# Initialize LSTM for Hindi and Bengali Task2
 def initialize_SentimentLSTM_model(n_vocab, n_embed, n_hidden, n_output, n_layers, device, embedding_weights):
     net = SentimentLSTM(n_vocab, n_embed, n_hidden, n_output, n_layers, embedding_weights)
     net.to(device)
@@ -198,6 +203,7 @@ def initialize_SentimentLSTM_model(n_vocab, n_embed, n_hidden, n_output, n_layer
     
     return net, criterion
 
+# Initialize LSTM for Transfer_Learning Task2
 def initialize_SentimentLSTM_model_bengali(n_vocab, n_embed, n_hidden, n_output, n_layers, device, embedding_weights):
     net = SentimentLSTM_bengali(n_vocab, n_embed, n_hidden, n_output, n_layers, embedding_weights)
     net.to(device)
@@ -205,6 +211,7 @@ def initialize_SentimentLSTM_model_bengali(n_vocab, n_embed, n_hidden, n_output,
     
     return net, criterion
 
+# Initialize LSTM and CNN model for Hindi and Bengali Task3
 def initialize_SentimentLSTM_model_task3(n_vocab, batch_size, n_embed, n_hidden, n_output, n_layers, device, embedding_weights):
     net = SentimentLSTM_task3(n_vocab, batch_size, n_embed, n_hidden, n_output, n_layers, embedding_weights)
     net.to(device)
@@ -212,6 +219,7 @@ def initialize_SentimentLSTM_model_task3(n_vocab, batch_size, n_embed, n_hidden,
     
     return net, criterion
 
+# Initialize LSTM and CNN model for Transfer_Learning Task3
 def initialize_SentimentLSTM_model_task3_bengali(n_vocab, batch_size, n_embed, n_hidden, n_output, n_layers, device, embedding_weights):
     net = SentimentLSTM_task3_bengali(n_vocab, batch_size, n_embed, n_hidden, n_output, n_layers, embedding_weights)
     net.to(device)
@@ -219,6 +227,8 @@ def initialize_SentimentLSTM_model_task3_bengali(n_vocab, batch_size, n_embed, n
     return net, criterion
        
 
+# To calculate sampling probability
+# Takes in a word and total words, returns a probability
 def sampling_prob(word, total_words): #non_unique is the count of total words
     z_wi = total_words.count(word) / len(total_words)
     try:
@@ -228,6 +238,10 @@ def sampling_prob(word, total_words): #non_unique is the count of total words
         print("Word doesn't exist in corpus")
     pass
 
+
+# Creating x and y pair for training and saving them for future use
+# INPUT: Sentences, window_size
+# Output: x and y (In indices form for memory efficiency)
 def get_target_context(sentence, window_size, total_words):
     word = ''
     words_in_sentence = sentence.split(' ')
@@ -246,6 +260,8 @@ def get_target_context(sentence, window_size, total_words):
         if len(word) > 0 and len(context) > 0:
             yield(word, context)
 
+# Creating x and y pair for training and saving them for future use
+# Uses previous method
 def create_dataset(sentences, total_words, V, window_size): #Creating target, context tuple
     x_train = []
     y_train = []
