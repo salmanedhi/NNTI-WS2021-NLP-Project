@@ -85,7 +85,7 @@ def build_vocabulary(sentences):
             temp_nounique.append(k)
     return temp_unique, temp_nounique
 
-def word_to_one_hot(word, features):
+def word_to_one_hot(word, features, V):
     if word in V:
         index = V.index(word)
         encoding = np.zeros(features)
@@ -93,7 +93,7 @@ def word_to_one_hot(word, features):
         return encoding.astype(np.uint8)
     return False
 
-def not_word_to_one_hot(word, features):
+def not_word_to_one_hot(word, features, V):
     if word in V:
         index = V.index(word)
         return index
@@ -256,9 +256,9 @@ def create_dataset(sentences, total_words, V, window_size): #Creating target, co
             print("INDEX:", j, "Length:",len(x_train))
         word_context = get_target_context(i, window_size, total_words)
         for word, context in word_context:
-            input_vec = not_word_to_one_hot(word, len(V))
+            input_vec = not_word_to_one_hot(word, len(V), V)
             for j in context:
-                output_vec = not_word_to_one_hot(j, len(V))
+                output_vec = not_word_to_one_hot(j, len(V), V)
                 x_train.append(input_vec)
                 y_train.append(output_vec)
     x_train = np.array(x_train)
