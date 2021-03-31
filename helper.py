@@ -179,7 +179,7 @@ def split_data_train_valid_test(data_x, labels_y, batch_size):
     train_x, train_y = data_x[:train_cutoff], labels_y[:train_cutoff]
 #     valid_x, valid_y = data_x[train_cutoff : valid_cutoff], labels_y[train_cutoff : valid_cutoff]
     test_x, test_y = data_x[train_cutoff:], labels_y[train_cutoff:]
-    print(type(train_x), type(train_y))
+#     print(type(train_x), type(train_y))
     temp = torch.tensor(train_x)
     train_data = TensorDataset(torch.tensor(train_x), torch.tensor(train_y))
 #     valid_data = TensorDataset(torch.tensor(valid_x), torch.tensor(valid_y))
@@ -195,7 +195,6 @@ def initialize_SentimentLSTM_model(n_vocab, n_embed, n_hidden, n_output, n_layer
     net = SentimentLSTM(n_vocab, n_embed, n_hidden, n_output, n_layers, embedding_weights)
     net.to(device)
     criterion = nn.BCELoss()
-#     optimizer = torch.optim.Adam(net.parameters(), lr = 0.05, amsgrad=True)
     
     return net, criterion
 
@@ -203,7 +202,6 @@ def initialize_SentimentLSTM_model_bengali(n_vocab, n_embed, n_hidden, n_output,
     net = SentimentLSTM_bengali(n_vocab, n_embed, n_hidden, n_output, n_layers, embedding_weights)
     net.to(device)
     criterion = nn.BCELoss()
-#     optimizer = torch.optim.Adam(net.parameters(), lr = 0.05, amsgrad=True)
     
     return net, criterion
 
@@ -211,7 +209,6 @@ def initialize_SentimentLSTM_model_task3(n_vocab, batch_size, n_embed, n_hidden,
     net = SentimentLSTM_task3(n_vocab, batch_size, n_embed, n_hidden, n_output, n_layers)
     net.to(device)
     criterion = nn.BCELoss()
-#     optimizer = torch.optim.Adam(net.parameters(), lr = 0.05, amsgrad=True)
     
     return net, criterion
 
@@ -222,3 +219,50 @@ def initialize_SentimentLSTM_model_task3_bengali(n_vocab, batch_size, n_embed, n
     return net, criterion
        
 
+def sampling_prob(word, total_words): #non_unique is the count of total words
+    z_wi = total_words.count(word) / len(total_words)
+    try:
+        p_wi = (mt.sqrt(z_wi / 0.001) + 1) * (0.001 / z_wi)
+        return p_wi
+    except ZeroDivisionError:
+        print("Word doesn't exist in corpus")
+    pass
+
+def get_target_context(sentence, window_size, total_words):
+    word = ''
+    words_in_sentence = sentence.split(' ')
+    for i in range(len(words_in_sentence)):
+        context = []
+        randd = random.random()
+        if randd <= sampling_prob(words_in_sentence[i], total_words):
+            word = words_in_sentence[i]
+            upper_bound = i + window_size + 1
+            lower_bound = i - window_size
+            for j in range(lower_bound, upper_bound):
+                rand2 = random.random()
+                if i != j and j>=0 and j<len(words_in_sentence):
+                    if rand2 <= sampling_prob(words_in_sentence[j], total_words):
+                        context.append(words_in_sentence[j])
+        if len(word) > 0 and len(context) > 0:
+            yield(word, context)
+
+def create_dataset(sentences, total_words, V, window_size): #Creating target, context tuple
+    x_train = []
+    y_train = []
+    count = 0
+    print("started")
+    for j, i in enumerate(sentences):
+        if (j + 1) % 50 == 0:
+            print("INDEX:", j, "Length:",len(x_train))
+        word_context = get_target_context(i, window_size, total_words)
+        for word, context in word_context:
+            input_vec = not_word_to_one_hot(word, len(V))
+            for j in context:
+                output_vec = not_word_to_one_hot(j, len(V))
+                x_train.append(input_vec)
+                y_train.append(output_vec)
+    x_train = np.array(x_train)
+    y_train = np.array(y_train)
+    np.save('x_train_bengali', x_train)
+    np.save('y_train_bengali', y_train)
+    return x_train, y_train

@@ -12,7 +12,6 @@ class SentimentLSTM(nn.Module):
         self.n_hidden = n_hidden   # number of hidden nodes in LSTM
 
         self.embedding = nn.Embedding(n_vocab, n_embed)
-        #embeddings is a torch tensor.
         self.embedding.weight = nn.Parameter(embedding_weights, requires_grad = False)
         self.lstm = nn.LSTM(n_embed, n_hidden, n_layers, batch_first = True, dropout = drop_p)
         self.dropout = nn.Dropout(drop_p)
@@ -56,7 +55,6 @@ class SentimentLSTM_bengali(nn.Module):
         self.n_hidden = n_hidden   # number of hidden nodes in LSTM
 
         self.embedding = nn.Embedding(n_vocab, n_embed)
-        #embeddings is a torch tensor.
         self.embedding.weight = nn.Parameter(embedding_weights)
         self.lstm = nn.LSTM(n_embed, n_hidden, n_layers, batch_first = True, dropout = drop_p)
         self.dropout = nn.Dropout(drop_p)
@@ -100,7 +98,6 @@ class SentimentLSTM_task3(nn.Module):
         self.n_hidden = n_hidden   # number of hidden nodes in LSTM
 
         self.embedding = nn.Embedding(n_vocab, n_embed)
-        #embeddings is a torch tensor.
 #         self.embedding.weight = nn.Parameter(embedding_weights, requires_grad = False)
         nn.Conv1d(in_channels=batch_size, out_channels=batch_size, kernel_size=1, stride=1)
         self.lstm = nn.LSTM(n_embed, n_hidden, n_layers, batch_first = True, dropout = drop_p)
