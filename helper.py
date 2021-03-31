@@ -205,8 +205,8 @@ def initialize_SentimentLSTM_model_bengali(n_vocab, n_embed, n_hidden, n_output,
     
     return net, criterion
 
-def initialize_SentimentLSTM_model_task3(n_vocab, batch_size, n_embed, n_hidden, n_output, n_layers, device):
-    net = SentimentLSTM_task3(n_vocab, batch_size, n_embed, n_hidden, n_output, n_layers)
+def initialize_SentimentLSTM_model_task3(n_vocab, batch_size, n_embed, n_hidden, n_output, n_layers, device, embedding_weights):
+    net = SentimentLSTM_task3(n_vocab, batch_size, n_embed, n_hidden, n_output, n_layers, embedding_weights)
     net.to(device)
     criterion = nn.BCELoss()
     

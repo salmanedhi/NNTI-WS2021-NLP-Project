@@ -89,7 +89,7 @@ class SentimentLSTM_bengali(nn.Module):
 
 class SentimentLSTM_task3(nn.Module):
 
-    def __init__(self, n_vocab, batch_size, n_embed, n_hidden, n_output, n_layers, drop_p = 0.5):
+    def __init__(self, n_vocab, batch_size, n_embed, n_hidden, n_output, n_layers, embedding_weights, drop_p = 0.5):
 
         super().__init__()
         # params: "n_" means dimension
@@ -98,6 +98,7 @@ class SentimentLSTM_task3(nn.Module):
         self.n_hidden = n_hidden   # number of hidden nodes in LSTM
 
         self.embedding = nn.Embedding(n_vocab, n_embed)
+        self.embedding.weight = nn.Parameter(embedding_weights)
 #         self.embedding.weight = nn.Parameter(embedding_weights, requires_grad = False)
         nn.Conv1d(in_channels=batch_size, out_channels=batch_size, kernel_size=1, stride=1)
         self.lstm = nn.LSTM(n_embed, n_hidden, n_layers, batch_first = True, dropout = drop_p)
